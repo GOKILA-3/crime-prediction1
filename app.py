@@ -4,6 +4,7 @@ import numpy as np
 import pickle
 import joblib
 import matplotlib.pyplot as plt
+import os
 
 # Set Streamlit Page Config
 st.set_page_config(
@@ -15,22 +16,24 @@ st.set_page_config(
 # Load the trained ML model
 @st.cache_resource
 def load_model():
-    with open(r"C:\\Users\\gokil\\Downloads\\pavi's project\\crime_model_compressed.pkl", "rb") as f:
+    with open("crime_model_compressed.pkl", "rb") as f:
         return joblib.load(f)
 
 # Load label encoders
 @st.cache_resource
 def load_encoders():
-    with open(r"C:\\Users\\gokil\\Downloads\\pavi's project\\label_encoders.pkl", "rb") as f:
+    with open("label_encoders.pkl", "rb") as f:
         return pickle.load(f)
 
-# Load model & encoders
+# Load crime dataset to populate dropdowns
+@st.cache_data
+def load_data():
+    return pd.read_csv("crime.csv")
+
+# Load model, encoders, and data
 model = load_model()
 encoders = load_encoders()
-
-# Load crime dataset to populate dropdowns
-data_path = r"C:\\Users\\gokil\\Downloads\\pavi's project\\Indian-Crime-Data-Analysis-Forecasting-main\\crime.csv"
-crime_data = pd.read_csv(data_path)
+crime_data = load_data()
 
 # Extract unique states and state-district mapping
 locations = crime_data["STATE/UT"].unique()
@@ -78,7 +81,7 @@ if st.button("🔮 **Predict Crime Risk**"):
             district_encoded = encoders["DISTRICT"].transform([district])[0]
 
             # Create input DataFrame
-            input_df = pd.DataFrame([[location_encoded, district_encoded, year]], 
+            input_df = pd.DataFrame([[location_encoded, district_encoded, year]],
                                     columns=["STATE/UT", "DISTRICT", "YEAR"])
 
             # Predict
